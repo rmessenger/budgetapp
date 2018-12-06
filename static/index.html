@@ -1,8 +1,29 @@
 <html>
   <head>
     <title>BudgetApp</title>
+    <script src="https://vuejs.org/js/vue.js"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
   </head>
   <body>
-    <h1>BudgetApp</h1>
+    <div id="app">
+      <h1>BudgetApp</h1>
+      <p v-for="month in months">
+        <b>{{month.month}}, {{month.year}}:</b>
+        ${{month.planned_income}}
+      </p>
+    </div>
   </body>
+  <script>
+    var vm = new Vue({
+      el: '#app',
+      data: () => ({
+        months: [],
+      }),
+      created() {
+        axios.get('months').then(months => {
+          this.months = months.data;
+        });
+      },
+    });
+  </script>
 </html>
