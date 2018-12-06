@@ -25,9 +25,9 @@ create table ITEM (
     foreign key (month, year, category_name) references CATEGORY(month, year, name));
     
 create view MONTH_SUMMARY as
-select month, year, planned_income, sum(planned_expenses) as planned_expenses, actual_expenses, count(name) as category_count, item_count from CATEGORY
-natural join (
-	select month, year, planned_income, sum(cost) as actual_expenses, count(id) as item_count FROM ITEM
-	natural join MONTH
-	group by month, year) as X
+select X.month, X.year, planned_income, sum(planned_expenses) as planned_expenses, actual_expenses, count(name) as category_count, item_count from CATEGORY
+right outer join (
+	select MONTH.month, MONTH.year, planned_income, sum(cost) as actual_expenses, count(id) as item_count FROM ITEM
+	right outer join MONTH on MONTH.month = ITEM.month and MONTH.year = ITEM.year
+    group by month, year) as X on X.month = CATEGORY.month and X.year = CATEGORY.year
 group by month, year
