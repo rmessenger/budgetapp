@@ -10,7 +10,7 @@
       
       <!-- Select a month -->
       <select v-model="selectedMonth">
-        <option :value="null">Next Month</option>
+        <option :value="null">Add Next Month</option>
         <option v-for="month in months" :value="month">
           <b>{{monthWords[month.month-1]}}, {{month.year}}:</b>
           ${{month.planned_income}}
@@ -57,14 +57,7 @@
         ],
       }),
       created() {
-        this.getMonths().then(months => {
-          this.months = months;
-          if (this.months.length > 0) {
-            this.selectedMonth = this.months[0];
-          } else {
-            this.addNextMonth();
-          }
-        });
+        this.reloadMonths();
       },
       computed: {
         nextMonth() {
@@ -77,6 +70,9 @@
             year: (new Date()).getFullYear(),
             planned_income: 0,
           };
+        },
+        currentMonth() {
+          return this.months.find(month => month.month == (new Date()).getMonth()+1 && month.year == (new Date()).getFullYear());
         },
       },
       watch: {
@@ -104,6 +100,26 @@
               this.months.unshift(this.nextMonth);
               this.selectedMonth = this.months[0];
             }).catch(error => console.log(error));
+        },
+        reloadMonths() {
+          this.getMonths().then(months => {
+            this.months = months;
+            if (this.months.length > 0) {
+              if (this.selectedMonth) {
+                this.selectedMonth = this.months.find(m => m.month == this.selectedMonth.month && m.year == this.selectedMonth.year);
+              } 
+
+              if (!this.selectedMonth) {
+                if (this.currentMonth) {
+                  this.selectedMonth = this.currentMonth;
+                } else {
+                  this.selectedMonth = this.months[0];
+                }
+              }
+            } else {
+              this.addNextMonth();
+            }
+          });
         },
 
         // API CALLS
