@@ -7,22 +7,123 @@
   <body>
     <div id="app">
       <h1>BudgetApp</h1>
-      <p v-for="month in months">
-        <b>{{month.month}}, {{month.year}}:</b>
-        ${{month.planned_income}}
-      </p>
+      
+      <!-- Select a month -->
+      <select v-model="selectedMonth">
+        <option :value="null">Next Month</option>
+        <option v-for="month in months" :value="month">
+          <b>{{monthWords[month.month-1]}}, {{month.year}}:</b>
+          ${{month.planned_income}}
+        </option>
+      </select>
+
+      <!-- List of categories -->
+      <ul>
+        <li v-for="category in categories">
+          {{category.name}} (${{category.planned_expenses}} planned)
+        </li>
+      </ul>
+
+      <!-- List of items -->
+      <ul>
+        <li v-for="item in items">
+          {{item.name}} (${{item.cost}})
+        </li>
+      </ul>
     </div>
   </body>
   <script>
+
     var vm = new Vue({
       el: '#app',
       data: () => ({
         months: [],
+        items: [],
+        categories: [],
+        selectedMonth: null,
+        monthWords: [
+          'January',
+          'February',
+          'March',
+          'April',
+          'May',
+          'June',
+          'July',
+          'August',
+          'September',
+          'October',
+          'November',
+          'December',
+        ],
       }),
       created() {
-        axios.get('months').then(months => {
-          this.months = months.data;
+        this.getMonths().then(months => {
+          this.months = months;
+          if (this.months.length > 0) {
+            this.selectedMonth = this.months[0];
+          } else {
+            this.addNextMonth();
+          }
         });
+      },
+      computed: {
+        nextMonth() {
+          return this.months.length > 0 ? {
+            month: this.months[0].month < 12 ? this.months[0].month + 1 : 1,
+            year: this.months[0].month < 12 ? this.months[0].year : this.months[0].year + 1,
+            planned_income: 0,
+          } : {
+            month: (new Date()).getMonth() + 1,
+            year: (new Date()).getFullYear(),
+            planned_income: 0,
+          };
+        },
+      },
+      watch: {
+        selectedMonth(val) {
+          if (val) {
+            Promise.all([
+              this.getMonthItems(val.month, val.year),
+              this.getMonthCategories(val.month, val.year),
+            ]).then(results => {
+              const [items, categories] = results;
+              this.items = items;
+              this.categories = categories;
+            });
+          } else {
+            this.items = [];
+            this.categories = [];
+            this.addNextMonth();
+          }
+        },
+      },
+      methods: {
+        // ACTIONS
+        addNextMonth() {
+            this.addMonth(this.nextMonth).then(() => {
+              this.months.unshift(this.nextMonth);
+              this.selectedMonth = this.months[0];
+            }).catch(error => console.log(error));
+        },
+
+        // API CALLS
+        addMonth(m) {
+          return axios.post(`month/${m.month}/${m.year}/${m.planned_income}`);
+        },
+        getMonths() {
+          return axios.get('months').then(result => result.data.sort((a,b) => {
+            return (100*b.year+b.month) - (100*a.year+a.month);
+          }));
+        },
+        getMonthItems(m, y) {
+          return axios.get(`items/${m}/${y}`).then(result => result.data);
+        },
+        getCategoryItems(m, y, c) {
+          return axios.get(`items/${m}/${y}/${c}`).then(result => result.data);
+        },
+        getMonthCategories(m, y) {
+          return axios.get(`categories/${m}/${y}`).then(result => result.data);
+        },
       },
     });
   </script>
