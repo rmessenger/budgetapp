@@ -54,13 +54,11 @@ select.month {
     padding: 10px;
 }
 input {
-    background: black;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    padding: 5px;
+    background: none;
     outline: none;
-    font-weight: bold;
+    border: none;
+    border-bottom: 1px dotted black;
+    min-width: 10px;
 }
 table {
     width: 100%;

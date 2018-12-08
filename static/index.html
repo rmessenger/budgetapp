@@ -25,10 +25,10 @@
     <div id="content" v-if="selectedMonth">
         <!-- Planned income -->
         <table>
-            <tr>
+            <tr class="bb">
                 <td><b>Planned Income</b></td>
                 <td class="tar">
-                    <input type="text" class="tar" v-model="selectedMonth.planned_income" @input="updateSelectedMonth"/>
+                    $<input type="text" class="tar" v-model="selectedMonth.planned_income" size="5" @blur="updateSelectedMonth"/>
                 </td>
             </tr>
         </table>
@@ -42,13 +42,13 @@
             </tr>
             <tr class="bb">
                 <td><b>Total Expenses</b></td>
-                <td class="tar">{{totalPlannedExpenses}}</td>
-                <td class="tar">{{totalActualExpenses}}</td>
+                <td class="tar">${{totalPlannedExpenses}}</td>
+                <td class="tar">${{totalActualExpenses}}</td>
             </tr>
             <tr v-for="category in categoriesWithActuals">
                 <td>{{category.name}}</td>
-                <td class="tar">{{category.planned_expenses}}</td>
-                <td class="tar">{{category.actual_expenses}}</td>
+                <td class="tar">${{category.planned_expenses}}</td>
+                <td class="tar">${{category.actual_expenses}}</td>
             </tr>
             <tr class="sa">
                 <td><a @click="createNewCategory">+ Add Category</a></td>
@@ -66,8 +66,8 @@
                 <td class="tar"><b>Cost</b></td>
             </tr>
             <tr v-for="item in items">
-                <td>{{selectedMonth.month}}/{{item.day}}</td>
-                <td>{{item.name}}</td>
+                <td>{{selectedMonth.month}}/<input type="text" v-model="item.day" size="3" @blur="updateItem(item)"/></td>
+                <td><input type="text" v-model="item.name" @blur="updateItem(item)"/></td>
                 <td>
                     <select v-model="item.category_name" @change="updateItem(item)">
                         <option v-for="category in categories" :value="category.name">
@@ -75,7 +75,7 @@
                         </option>
                     </select>
                 </td>
-                <td class="tar">{{item.cost}}</td>
+                <td class="tar">$<input type="text" v-model="item.cost" size="3" class="tar" @blur="updateItem(item)"/></td>
             </tr>
             <tr class="sa" v-if="categories.length > 0">
                 <td colspan="2"><a @click="createNewItem">+ Add Item</a></td>
@@ -131,12 +131,16 @@
                 return this.categories.reduce((tpe, category) => tpe+category.planned_expenses, 0);
             },
             totalActualExpenses() {
-                return this.items.reduce((tae, item) => tae+item.cost, 0);
+                return this.items.reduce((tae, item) => {
+                    return parseInt(item.cost) ? tae+parseInt(item.cost) : tae;
+                }, 0);
             },
             categoriesWithActuals() {
                 return this.categories.map(category => ({
                     ...category,
-                    actual_expenses: this.items.filter(item => item.category_name==category.name).reduce((ae, item) => ae+item.cost, 0),
+                    actual_expenses: this.items.filter(item => item.category_name==category.name).reduce((ae, item) => {
+                        return parseInt(item.cost) ? ae+parseInt(item.cost) : ae;
+                    }, 0),
                 }));
             },
             highestDay() {
@@ -225,8 +229,12 @@
 
             // API CALLS
             updateItem(item) {
-                if (item && item.cost && item.name.length > 0 && item.category_name.length > 0 && item.name.length > 0) {
-                    return axios.put(`item/${item.id}/${item.month}/${item.year}/${item.category_name}/${item.cost}/${item.day}/${item.name}`);
+                if (item && parseInt(item.cost) && item.name.length > 0 && item.category_name.length > 0 && item.name.length > 0) {
+                    if (item.id) {
+                        return axios.put(`item/${item.id}/${item.month}/${item.year}/${item.category_name}/${item.cost}/${item.day}/${item.name}`);
+                    } else {
+                        return axios.post(`item/${item.month}/${item.year}/${item.category_name}/${item.cost}/${item.day}/${item.name}`);
+                    }
                 }
             },
             deleteItem(item) {
