@@ -54,8 +54,9 @@
         <!-- List of categories -->
         <table>
             <tr class="bb">
-                <td></td>
-                <td></td>
+                <td colspan="2">
+                    <button class="add" @click="createNewCategory">+</button>
+                </td>
                 <td class="tar"><b>Planned</b></td>
                 <td class="tar"><b>Current</b></td>
                 <td class="tar"><b>Difference</b></td>
@@ -70,7 +71,7 @@
                 </td>
             </tr>
             <tr v-for="category in categories" :class="{ 'error': category.error }">
-                <td class="btntd"><button v-if="!categoryItemCount[category.name]" @click="removeCategory(category)">x</button></td>
+                <td class="btntd"><button class="remove" v-if="!categoryItemCount[category.name] || category.unsaved" @click="removeCategory(category)">-</button></td>
                 <td v-if="!category.unsaved">{{category.name}}</td>
                 <td v-else><input type="text" v-model="category.name" @blur="handleCategoryChange(category)"/></td>
                 <td class="tar"><input type="text" size="4" v-model="category.planned_expenses" @blur="handleCategoryChange(category)" class="tar"/></td>
@@ -79,26 +80,21 @@
                     {{category.planned_expenses - categoryCurrentExpenses[category.name]}}
                 </td>
             </tr>
-            <tr class="sa">
-                <td></td>
-                <td><a @click="createNewCategory">+ Add Category</a></td>
-                <td class="tar"></td>
-                <td class="tar"></td>
-                <td class="tar"></td>
-            </tr>
         </table>
 
         <!-- List of items -->
         <table>
             <tr class="bb">
-                <td></td>
+                <td>
+                    <button class="add" v-if="savedCategories.length > 0" @click="createNewItem">+</button>
+                </td>
                 <td><b>Date</b></td>
                 <td><b>Item</b></td>
                 <td><b>Category</b></td>
                 <td class="tar"><b>Cost</b></td>
             </tr>
             <tr v-for="item in items" :class="{ 'error': item.error }">
-                <td class="btntd"><button @click="removeItem(item)">x</button></td>
+                <td class="btntd"><button class="remove" @click="removeItem(item)">-</button></td>
                 <td>{{selectedMonth.month}}/<input type="text" v-model="item.day" size="2" @blur="handleItemChange(item)"/></td>
                 <td><input type="text" v-model="item.name" @blur="handleItemChange(item)"/></td>
                 <td>
@@ -110,12 +106,6 @@
                     </select>
                 </td>
                 <td class="tar"><input type="text" v-model="item.cost" size="4" class="tar" @blur="handleItemChange(item)"/></td>
-            </tr>
-            <tr class="sa" v-if="categories.length > 0">
-                <td></td>
-                <td colspan="2"><a @click="createNewItem">+ Add Item</a></td>
-                <td></td>
-                <td></td>
             </tr>
         </table>
     </div>
@@ -262,7 +252,7 @@
             },
             createNewItem() {
                 if (this.categories.length > 0) {
-                    this.items.push({
+                    this.items.unshift({
                         day: '',
                         month: this.selectedMonth.month,
                         year: this.selectedMonth.year,
@@ -273,7 +263,7 @@
                 }
             },
             createNewCategory() {
-                this.categories.push({
+                this.categories.unshift({
                     month: this.selectedMonth.month,
                     year: this.selectedMonth.year,
                     name: '',
@@ -295,7 +285,7 @@
                     }
                 }
                 if (item && item.day > 0 && item.day <= 31) {
-                    this.items = this.items.sort((a,b) => a.day - b.day);
+                    this.items = this.items.sort((a,b) => b.day - a.day);
                 }
             },
             handleCategoryChange(category) {
@@ -366,7 +356,7 @@
             },
             getMonthItems(m, y) {
                 return axios.get(`items/${m}/${y}`).then(result => result.data.sort((a,b) => {
-                    return a.day - b.day;
+                    return b.day - a.day;
                 }));
             },
             getCategoryItems(m, y, c) {

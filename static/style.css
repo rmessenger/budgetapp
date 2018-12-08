@@ -1,5 +1,6 @@
 body {
     margin: 0;
+    background: #eeeeee;
 }
 #header {
     position: fixed;
@@ -23,6 +24,7 @@ body {
     margin-left: auto;
     margin-right: auto;
     box-shadow: 1px 1px 5px black;
+    background: white;
 }
 #content {
     padding: 20px;
@@ -59,6 +61,7 @@ input {
     font-weight: bold;
     padding: 1px 5px;
     cursor: pointer;
+    box-shadow: 1px 1px 0 rgba(0,0,0,0.5);
 }
 input:focus {
     background: rgb(0, 0, 0);
@@ -93,8 +96,16 @@ button {
     border-radius: 10px;
     background: rgba(0,0,0,0.1);
     cursor: pointer;
-    font-weight: bold;
+    font-weight: bolder;
     border: none;
+    font-family: Courier;
+    box-shadow: 1px 1px 0 rgba(0,0,0,0.5);
+}
+button.remove {
+    background: rgba(255, 81, 0, 0.26);
+}
+button.add {
+    background: rgba(0, 128, 89, 0.26);
 }
 button:hover {
     background: black;
@@ -112,6 +123,9 @@ button:hover {
     #app {
         width: 100%;
         box-shadow: none;
+    }
+    body {
+        background: white;
     }
 }
 @media screen and (max-width: 425px) {
