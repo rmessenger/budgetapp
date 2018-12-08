@@ -1,147 +1,266 @@
 <html>
-  <head>
+<head>
     <title>Budget App</title>
     <script src="https://vuejs.org/js/vue.js"></script>
     <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
     <link rel="stylesheet" type="text/css" href="style.css"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  </head>
-  <body>
-    <div id="app">
-      <div id="header">
+</head>
+<body>
+<div id="app">
+
+    <!-- HEADER -->
+    <div id="header">
         <h1><i>BudgetApp</i></h1>
+
         <!-- Select a month -->
         <select v-model="selectedMonth" class="month">
-          <option :value="null">Add Next Month</option>
-          <option v-for="month in months" :value="month">
-            <b>{{monthWords[month.month-1]}}, {{month.year}}</b>
-          </option>
+            <option :value="null">Add Next Month</option>
+            <option v-for="month in months" :value="month">
+                <b>{{monthWords[month.month-1]}}, {{month.year}}</b>
+            </option>
         </select>
-      </div>
-
-      <!-- List of categories -->
-      <ul>
-        <li v-for="category in categories">
-          {{category.name}} (${{category.planned_expenses}} planned)
-        </li>
-      </ul>
-
-      <!-- List of items -->
-      <ul>
-        <li v-for="item in items">
-          {{item.name}} (${{item.cost}})
-        </li>
-      </ul>
     </div>
-  </body>
-  <script>
+
+    <div id="content" v-if="selectedMonth">
+        <!-- Planned income -->
+        <table>
+            <tr>
+                <td><b>Planned Income</b></td>
+                <td class="tar">
+                    <input type="text" class="tar" v-model="selectedMonth.planned_income" @input="updateSelectedMonth"/>
+                </td>
+            </tr>
+        </table>
+
+        <!-- List of categories -->
+        <table>
+            <tr class="bb">
+                <td></td>
+                <td class="tar"><b>Planned</b></td>
+                <td class="tar"><b>Actual</b></td>
+            </tr>
+            <tr class="bb">
+                <td><b>Total Expenses</b></td>
+                <td class="tar">{{totalPlannedExpenses}}</td>
+                <td class="tar">{{totalActualExpenses}}</td>
+            </tr>
+            <tr v-for="category in categoriesWithActuals">
+                <td>{{category.name}}</td>
+                <td class="tar">{{category.planned_expenses}}</td>
+                <td class="tar">{{category.actual_expenses}}</td>
+            </tr>
+            <tr class="sa">
+                <td><a @click="createNewCategory">+ Add Category</a></td>
+                <td class="tar"></td>
+                <td class="tar"></td>
+            </tr>
+        </table>
+
+        <!-- List of items -->
+        <table>
+            <tr class="bb">
+                <td><b>Date</b></td>
+                <td><b>Item</b></td>
+                <td><b>Category</b></td>
+                <td class="tar"><b>Cost</b></td>
+            </tr>
+            <tr v-for="item in items">
+                <td>{{selectedMonth.month}}/{{item.day}}</td>
+                <td>{{item.name}}</td>
+                <td>
+                    <select v-model="item.category_name" @change="updateItem(item)">
+                        <option v-for="category in categories" :value="category.name">
+                            {{category.name}}
+                        </option>
+                    </select>
+                </td>
+                <td class="tar">{{item.cost}}</td>
+            </tr>
+            <tr class="sa" v-if="categories.length > 0">
+                <td colspan="2"><a @click="createNewItem">+ Add Item</a></td>
+                <td></td>
+                <td></td>
+            </tr>
+        </table>
+    </div>
+</div>
+</body>
+<script>
     var vm = new Vue({
-      el: '#app',
-      data: () => ({
-        months: [],
-        items: [],
-        categories: [],
-        selectedMonth: null,
-        monthWords: [
-          'January',
-          'February',
-          'March',
-          'April',
-          'May',
-          'June',
-          'July',
-          'August',
-          'September',
-          'October',
-          'November',
-          'December',
-        ],
-      }),
-      created() {
-        this.reloadMonths();
-      },
-      computed: {
-        nextMonth() {
-          return this.months.length > 0 ? {
-            month: this.months[0].month < 12 ? this.months[0].month + 1 : 1,
-            year: this.months[0].month < 12 ? this.months[0].year : this.months[0].year + 1,
-            planned_income: 0,
-          } : {
-            month: (new Date()).getMonth() + 1,
-            year: (new Date()).getFullYear(),
-            planned_income: 0,
-          };
+        el: '#app',
+        data: () => ({
+            months: [],
+            items: [],
+            categories: [],
+            selectedMonth: null,
+            monthWords: [
+                'January',
+                'February',
+                'March',
+                'April',
+                'May',
+                'June',
+                'July',
+                'August',
+                'September',
+                'October',
+                'November',
+                'December',
+            ],
+        }),
+        created() {
+            this.reloadMonths();
         },
-        currentMonth() {
-          return this.months.find(month => month.month == (new Date()).getMonth()+1 && month.year == (new Date()).getFullYear());
+        computed: {
+            nextMonth() {
+                return this.months.length > 0 ? {
+                    month: this.months[0].month < 12 ? this.months[0].month + 1 : 1,
+                    year: this.months[0].month < 12 ? this.months[0].year : this.months[0].year + 1,
+                    planned_income: 0,
+                } : {
+                    month: (new Date()).getMonth() + 1,
+                    year: (new Date()).getFullYear(),
+                    planned_income: 0,
+                };
+            },
+            currentMonth() {
+                return this.months.find(month => month.month == (new Date()).getMonth()+1 && month.year == (new Date()).getFullYear());
+            },
+            totalPlannedExpenses() {
+                return this.categories.reduce((tpe, category) => tpe+category.planned_expenses, 0);
+            },
+            totalActualExpenses() {
+                return this.items.reduce((tae, item) => tae+item.cost, 0);
+            },
+            categoriesWithActuals() {
+                return this.categories.map(category => ({
+                    ...category,
+                    actual_expenses: this.items.filter(item => item.category_name==category.name).reduce((ae, item) => ae+item.cost, 0),
+                }));
+            },
+            highestDay() {
+                return this.items.reduce((hd, item) => hd > item.day ? hd : item.day, 1);
+            },
         },
-      },
-      watch: {
-        selectedMonth(val) {
-          if (val) {
-            Promise.all([
-              this.getMonthItems(val.month, val.year),
-              this.getMonthCategories(val.month, val.year),
-            ]).then(results => {
-              const [items, categories] = results;
-              this.items = items;
-              this.categories = categories;
-            });
-          } else {
-            this.items = [];
-            this.categories = [];
-            this.addNextMonth();
-          }
-        },
-      },
-      methods: {
-        // ACTIONS
-        addNextMonth() {
-            this.addMonth(this.nextMonth).then(() => {
-              this.months.unshift(this.nextMonth);
-              this.selectedMonth = this.months[0];
-            }).catch(error => console.log(error));
-        },
-        reloadMonths() {
-          this.getMonths().then(months => {
-            this.months = months;
-            if (this.months.length > 0) {
-              if (this.selectedMonth) {
-                this.selectedMonth = this.months.find(m => m.month == this.selectedMonth.month && m.year == this.selectedMonth.year);
-              } 
-
-              if (!this.selectedMonth) {
-                if (this.currentMonth) {
-                  this.selectedMonth = this.currentMonth;
+        watch: {
+            selectedMonth(val) {
+                if (val) {
+                    Promise.all([
+                        this.getMonthItems(val.month, val.year),
+                        this.getMonthCategories(val.month, val.year),
+                    ]).then(results => {
+                        const [items, categories] = results;
+                        this.items = items;
+                        this.categories = categories;
+                    });
                 } else {
-                  this.selectedMonth = this.months[0];
+                    this.items = [];
+                    this.categories = [];
+                    this.addNextMonth();
                 }
-              }
-            } else {
-              this.addNextMonth();
-            }
-          });
+            },
         },
+        methods: {
+            // ACTIONS
+            addNextMonth() {
+                this.addMonth(this.nextMonth).then(() => {
+                    this.months.unshift(this.nextMonth);
+                    this.selectedMonth = this.months[0];
+                }).catch(error => console.log(error));
+            },
+            reloadMonths() {
+                this.getMonths().then(months => {
+                    this.months = months;
+                    if (this.months.length > 0) {
+                        if (this.selectedMonth) {
+                            this.selectedMonth = this.months.find(m => m.month == this.selectedMonth.month && m.year == this.selectedMonth.year);
+                        }
 
-        // API CALLS
-        addMonth(m) {
-          return axios.post(`month/${m.month}/${m.year}/${m.planned_income}`);
+                        if (!this.selectedMonth) {
+                            if (this.currentMonth) {
+                                this.selectedMonth = this.currentMonth;
+                            } else {
+                                this.selectedMonth = this.months[0];
+                            }
+                        }
+                    } else {
+                        this.addNextMonth();
+                    }
+                });
+            },
+            updateSelectedMonth() {
+                if (this.selectedMonth && this.selectedMonth.planned_income) {
+                    this.updateMonth(this.selectedMonth);
+                }
+            },
+            createNewItem() {
+                if (this.categories.length > 0) {
+                    const newItem = {
+                        day: this.highestDay,
+                        month: this.selectedMonth.month,
+                        year: this.selectedMonth.year,
+                        name: 'New Item',
+                        cost: 0,
+                        category_name: this.categories[0].name,
+                    };
+                    this.addItem(newItem).then(() => {
+                        this.items = this.items.concat([newItem]).sort((a,b) => {
+                            return a.day - b.day;
+                        })
+                    });
+                }
+            },
+            createNewCategory() {
+                const newCategory = {
+                    month: this.selectedMonth.month,
+                    year: this.selectedMonth.year,
+                    name: "New Category",
+                    planned_expenses: 0,
+                };
+                this.addCategory(newCategory).then(() => {
+                    this.categories.push(newCategory);
+                });
+            },
+
+            // API CALLS
+            updateItem(item) {
+                if (item && item.cost && item.name.length > 0 && item.category_name.length > 0 && item.name.length > 0) {
+                    return axios.put(`item/${item.id}/${item.month}/${item.year}/${item.category_name}/${item.cost}/${item.day}/${item.name}`);
+                }
+            },
+            deleteItem(item) {
+                return axios.delete(`item/${item.id}`);
+            },
+            updateMonth(m) {
+                return axios.put(`month/${m.month}/${m.year}/${m.planned_income}`);
+            },
+            addMonth(m) {
+                return axios.post(`month/${m.month}/${m.year}/${m.planned_income}`);
+            },
+            addItem(item) {
+                return axios.post(`item/${item.month}/${item.year}/${item.category_name}/${item.cost}/${item.day}/${item.name}`);
+            },
+            addCategory(category) {
+                return axios.post(`category/${category.month}/${category.year}/${category.name}/${category.planned_expenses}`);
+            },
+            getMonths() {
+                return axios.get('months').then(result => result.data.sort((a,b) => {
+                    return (100*b.year+b.month) - (100*a.year+a.month);
+                }));
+            },
+            getMonthItems(m, y) {
+                return axios.get(`items/${m}/${y}`).then(result => result.data.sort((a,b) => {
+                    return a.day - b.day;
+                }));
+            },
+            getCategoryItems(m, y, c) {
+                return axios.get(`items/${m}/${y}/${c}`).then(result => result.data);
+            },
+            getMonthCategories(m, y) {
+                return axios.get(`categories/${m}/${y}`).then(result => result.data);
+            },
         },
-        getMonths() {
-          return axios.get('months').then(result => result.data.sort((a,b) => {
-            return (100*b.year+b.month) - (100*a.year+a.month);
-          }));
-        },
-        getMonthItems(m, y) {
-          return axios.get(`items/${m}/${y}`).then(result => result.data);
-        },
-        getCategoryItems(m, y, c) {
-          return axios.get(`items/${m}/${y}/${c}`).then(result => result.data);
-        },
-        getMonthCategories(m, y) {
-          return axios.get(`categories/${m}/${y}`).then(result => result.data);
-        },
-      },
     });
-  </script>
+</script>
 </html>
