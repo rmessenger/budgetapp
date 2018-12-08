@@ -89,6 +89,20 @@ tr.error {
     color: #ff5100;
     font-weight: bold;
 }
+button {
+    border-radius: 10px;
+    background: rgba(0,0,0,0.1);
+    cursor: pointer;
+    font-weight: bold;
+    border: none;
+}
+button:hover {
+    background: black;
+    color: white;
+}
+.btntd {
+    width: 30px;
+}
 @media screen and (max-width: 600px) {
     #header {
         width: calc(100% - 40px);

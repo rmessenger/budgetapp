@@ -55,11 +55,13 @@
         <table>
             <tr class="bb">
                 <td></td>
+                <td></td>
                 <td class="tar"><b>Planned</b></td>
                 <td class="tar"><b>Current</b></td>
                 <td class="tar"><b>Difference</b></td>
             </tr>
             <tr class="bb">
+                <td></td>
                 <td><b>Total Expenses</b></td>
                 <td class="tar">{{totalPlannedExpenses}}</td>
                 <td class="tar">{{totalCurrentExpenses}}</td>
@@ -68,6 +70,7 @@
                 </td>
             </tr>
             <tr v-for="category in categories" :class="{ 'error': category.error }">
+                <td class="btntd"><button v-if="!categoryItemCount[category.name]" @click="removeCategory(category)">x</button></td>
                 <td v-if="!category.unsaved">{{category.name}}</td>
                 <td v-else><input type="text" v-model="category.name" @blur="handleCategoryChange(category)"/></td>
                 <td class="tar"><input type="text" size="4" v-model="category.planned_expenses" @blur="handleCategoryChange(category)" class="tar"/></td>
@@ -77,6 +80,7 @@
                 </td>
             </tr>
             <tr class="sa">
+                <td></td>
                 <td><a @click="createNewCategory">+ Add Category</a></td>
                 <td class="tar"></td>
                 <td class="tar"></td>
@@ -87,12 +91,14 @@
         <!-- List of items -->
         <table>
             <tr class="bb">
+                <td></td>
                 <td><b>Date</b></td>
                 <td><b>Item</b></td>
                 <td><b>Category</b></td>
                 <td class="tar"><b>Cost</b></td>
             </tr>
             <tr v-for="item in items" :class="{ 'error': item.error }">
+                <td class="btntd"><button @click="removeItem(item)">x</button></td>
                 <td>{{selectedMonth.month}}/<input type="text" v-model="item.day" size="2" @blur="handleItemChange(item)"/></td>
                 <td><input type="text" v-model="item.name" @blur="handleItemChange(item)"/></td>
                 <td>
@@ -106,6 +112,7 @@
                 <td class="tar"><input type="text" v-model="item.cost" size="4" class="tar" @blur="handleItemChange(item)"/></td>
             </tr>
             <tr class="sa" v-if="categories.length > 0">
+                <td></td>
                 <td colspan="2"><a @click="createNewItem">+ Add Item</a></td>
                 <td></td>
                 <td></td>
@@ -275,6 +282,24 @@
                             category.unsaved = false;
                             category.error = null;
                         }).catch(error => category.error = error.message);
+                }
+            },
+            removeItem(item) {
+                if (item.id) {
+                    this.deleteItem(item).then(() => {
+                        this.items = this.items.filter(i => i.id != item.id);
+                    });
+                } else {
+                    this.items = this.items.filter(i => i !== item);
+                }
+            },
+            removeCategory(category) {
+                if (category.unsaved) {
+                    this.categories = this.categories.filter(c => c !== category);
+                } else if (!this.categoryItemCount[category.name]) {
+                    this.deleteCategory(category).then(() => {
+                        this.categories = this.categories.filter(c => c.name != category.name);
+                    });
                 }
             },
 
