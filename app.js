@@ -41,7 +41,7 @@ app.put('/category/:month/:year/:name/:planned_expenses', (request, response) =>
     const name = ("" + request.params.name).replace(/[^A-Za-z0-9 ]/g, "");
 
     if (month > 0 && month <= 12 && year > 0 && name.length > 0 && planned_expenses >= 0) {
-        db.query(`update CATEGORY set name = "${name}", planned_expenses = ${planned_expenses} where month = ${month} and year = ${year}`, (error, results) => {
+        db.query(`update CATEGORY set planned_expenses = ${planned_expenses} where name = "${name}" and month = ${month} and year = ${year}`, (error, results) => {
             if (error) {
                 response.status(500);
                 response.send(error);
@@ -81,7 +81,7 @@ app.put('/item/:id/:month/:year/:category/:cost/:day/:name', (request, response)
     }
 });
 
-app.del('/category/:month/:year/:name', (request, response) => {
+app.delete('/category/:month/:year/:name', (request, response) => {
     const month = parseInt(request.params.month);
     const year = parseInt(request.params.year);
     const name = ("" + request.params.name).replace(/[^a-zA-Z0-9 ]/g, "");
@@ -102,7 +102,7 @@ app.del('/category/:month/:year/:name', (request, response) => {
     }
 });
 
-app.del('/item/:id', (request, response) => {
+app.delete('/item/:id', (request, response) => {
     const id = parseInt(request.params.id);
 
     if (id) {
@@ -121,7 +121,7 @@ app.del('/item/:id', (request, response) => {
     }
 });
 
-app.del('/month/:month/:year', (request, response) => {
+app.delete('/month/:month/:year', (request, response) => {
     const month = parseInt(request.params.month);
     const year = parseInt(request.params.year);
 

@@ -28,7 +28,7 @@
             <tr class="bb">
                 <td><b>Planned Income</b></td>
                 <td class="tar">
-                    $<input type="text" class="tar" v-model="selectedMonth.planned_income" size="5" @blur="updateSelectedMonth"/>
+                    <input type="text" class="tar" v-model="selectedMonth.planned_income" size="4" @blur="updateSelectedMonth" @focus=""/>
                 </td>
             </tr>
         </table>
@@ -39,19 +39,28 @@
                 <td></td>
                 <td class="tar"><b>Planned</b></td>
                 <td class="tar"><b>Actual</b></td>
+                <td class="tar"><b>Difference</b></td>
             </tr>
             <tr class="bb">
                 <td><b>Total Expenses</b></td>
-                <td class="tar">${{totalPlannedExpenses}}</td>
-                <td class="tar">${{totalActualExpenses}}</td>
+                <td class="tar">{{totalPlannedExpenses}}</td>
+                <td class="tar">{{totalActualExpenses}}</td>
+                <td class="tar diff" :class="{ 'neg' : totalActualExpenses > totalPlannedExpenses }">
+                    {{totalPlannedExpenses - totalActualExpenses}}
+                </td>
             </tr>
-            <tr v-for="category in categoriesWithActuals">
-                <td>{{category.name}}</td>
-                <td class="tar">${{category.planned_expenses}}</td>
-                <td class="tar">${{category.actual_expenses}}</td>
+            <tr v-for="category in categories" :class="{ 'error': category.error }">
+                <td v-if="!category.unsaved">{{category.name}}</td>
+                <td v-else><input type="text" v-model="category.name" @blur="handleCategoryChange(category)"/></td>
+                <td class="tar"><input type="text" size="4" v-model="category.planned_expenses" @blur="handleCategoryChange(category)" class="tar"/></td>
+                <td class="tar">{{categoryActualExpenses[category.name]}}</td>
+                <td class="tar diff" :class="{ 'neg': categoryActualExpenses[category.name] > category.planned_expenses }">
+                    {{category.planned_expenses - categoryActualExpenses[category.name]}}
+                </td>
             </tr>
             <tr class="sa">
                 <td><a @click="createNewCategory">+ Add Category</a></td>
+                <td class="tar"></td>
                 <td class="tar"></td>
                 <td class="tar"></td>
             </tr>
@@ -65,17 +74,18 @@
                 <td><b>Category</b></td>
                 <td class="tar"><b>Cost</b></td>
             </tr>
-            <tr v-for="item in items">
-                <td>{{selectedMonth.month}}/<input type="text" v-model="item.day" size="3" @blur="updateItem(item)"/></td>
-                <td><input type="text" v-model="item.name" @blur="updateItem(item)"/></td>
+            <tr v-for="item in items" :class="{ 'error': item.error }">
+                <td>{{selectedMonth.month}}/<input type="text" v-model="item.day" size="2" @blur="handleItemChange(item)"/></td>
+                <td><input type="text" v-model="item.name" @blur="handleItemChange(item)"/></td>
                 <td>
-                    <select v-model="item.category_name" @change="updateItem(item)">
-                        <option v-for="category in categories" :value="category.name">
+                    <select v-model="item.category_name" @change="handleItemChange(item)">
+                        <option value="">Select Category</option>
+                        <option v-for="category in savedCategories" :value="category.name">
                             {{category.name}}
                         </option>
                     </select>
                 </td>
-                <td class="tar">$<input type="text" v-model="item.cost" size="3" class="tar" @blur="updateItem(item)"/></td>
+                <td class="tar"><input type="text" v-model="item.cost" size="4" class="tar" @blur="handleItemChange(item)"/></td>
             </tr>
             <tr class="sa" v-if="categories.length > 0">
                 <td colspan="2"><a @click="createNewItem">+ Add Item</a></td>
@@ -128,23 +138,34 @@
                 return this.months.find(month => month.month == (new Date()).getMonth()+1 && month.year == (new Date()).getFullYear());
             },
             totalPlannedExpenses() {
-                return this.categories.reduce((tpe, category) => tpe+category.planned_expenses, 0);
+                return this.categories.reduce((tpe, category) => {
+                    return parseInt(category.planned_expenses) ? tpe+parseInt(category.planned_expenses) : tpe;
+                }, 0);
             },
             totalActualExpenses() {
                 return this.items.reduce((tae, item) => {
                     return parseInt(item.cost) ? tae+parseInt(item.cost) : tae;
                 }, 0);
             },
-            categoriesWithActuals() {
-                return this.categories.map(category => ({
-                    ...category,
-                    actual_expenses: this.items.filter(item => item.category_name==category.name).reduce((ae, item) => {
+            categoryActualExpenses() {
+                return this.categories.reduce((cae, category) => ({
+                    ...cae,
+                    [category.name]: this.items.filter(item => item.category_name==category.name).reduce((ae, item) => {
                         return parseInt(item.cost) ? ae+parseInt(item.cost) : ae;
                     }, 0),
-                }));
+                }), {});
             },
             highestDay() {
                 return this.items.reduce((hd, item) => hd > item.day ? hd : item.day, 1);
+            },
+            categoryItemCount() {
+                return this.categories.reduce((cic, category) => ({
+                    ...cic,
+                    [category.name]: this.items.filter(item => item.category_name == category.name).length,
+                }), {});
+            },
+            savedCategories() {
+                return this.categories.filter(category => !category.unsaved);
             },
         },
         watch: {
@@ -200,42 +221,51 @@
             },
             createNewItem() {
                 if (this.categories.length > 0) {
-                    const newItem = {
+                    this.items.push({
                         day: this.highestDay,
                         month: this.selectedMonth.month,
                         year: this.selectedMonth.year,
-                        name: 'New Item',
-                        cost: 0,
-                        category_name: this.categories[0].name,
-                    };
-                    this.addItem(newItem).then(() => {
-                        this.items = this.items.concat([newItem]).sort((a,b) => {
-                            return a.day - b.day;
-                        })
+                        name: '',
+                        cost: '',
+                        category_name: '',
                     });
                 }
             },
             createNewCategory() {
-                const newCategory = {
+                this.categories.push({
                     month: this.selectedMonth.month,
                     year: this.selectedMonth.year,
-                    name: "New Category",
-                    planned_expenses: 0,
-                };
-                this.addCategory(newCategory).then(() => {
-                    this.categories.push(newCategory);
+                    name: '',
+                    planned_expenses: '',
+                    unsaved: true,
                 });
+            },
+            handleItemChange(item) {
+                if (item && parseInt(item.cost) >= 0 && item.name.length > 0 && item.category_name.length > 0 && item.day > 0 && item.day <= 31) {
+                    (item.id ? this.updateItem(item) : this.newItem(item))
+                        .then(() => item.error = null)
+                        .catch(error => item.error = error.message);
+                }
+                if (item && item.day > 0 && item.day <= 31) {
+                    this.items = this.items.sort((a,b) => a.day - b.day);
+                }
+            },
+            handleCategoryChange(category) {
+                if (category && parseInt(category.planned_expenses) >= 0 && category.name.length > 0) {
+                    (category.unsaved ? this.addCategory(category) : this.updateCategory(category))
+                        .then(() => {
+                            category.unsaved = false;
+                            category.error = null;
+                        }).catch(error => category.error = error.message);
+                }
             },
 
             // API CALLS
             updateItem(item) {
-                if (item && parseInt(item.cost) && item.name.length > 0 && item.category_name.length > 0 && item.name.length > 0) {
-                    if (item.id) {
-                        return axios.put(`item/${item.id}/${item.month}/${item.year}/${item.category_name}/${item.cost}/${item.day}/${item.name}`);
-                    } else {
-                        return axios.post(`item/${item.month}/${item.year}/${item.category_name}/${item.cost}/${item.day}/${item.name}`);
-                    }
-                }
+                return axios.put(`item/${item.id}/${item.month}/${item.year}/${item.category_name}/${item.cost}/${item.day}/${item.name}`);
+            },
+            newItem(item) {
+                return axios.post(`item/${item.month}/${item.year}/${item.category_name}/${item.cost}/${item.day}/${item.name}`);
             },
             deleteItem(item) {
                 return axios.delete(`item/${item.id}`);
@@ -251,6 +281,16 @@
             },
             addCategory(category) {
                 return axios.post(`category/${category.month}/${category.year}/${category.name}/${category.planned_expenses}`);
+            },
+            updateCategory(category) {
+                return axios.put(`category/${category.month}/${category.year}/${category.name}/${category.planned_expenses}`);
+            },
+            deleteCategory(category) {
+                if (this.categoryItemCount[category.name]) {
+                    return Promise.reject("There are already items associated with this category!");
+                } else {
+                    return axios.delete(`category/${category.month}/${category.year}/${category.name}`);
+                }
             },
             getMonths() {
                 return axios.get('months').then(result => result.data.sort((a,b) => {

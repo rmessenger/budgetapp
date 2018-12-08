@@ -61,6 +61,11 @@ input {
     border-radius: 5px;
     font-weight: bold;
     padding: 1px 5px;
+    cursor: pointer;
+}
+input:focus {
+    background: rgb(0, 0, 0);
+    color: white;
 }
 table {
     width: 100%;
@@ -76,6 +81,16 @@ a {
 }
 tr.sa td {
     padding-top: 5px;
+}
+tr.error {
+    background: rgba(255, 0, 0, 0.29);
+}
+.diff {
+    color: #008059;
+}
+.diff.neg {
+    color: #ff5100;
+    font-weight: bold;
 }
 @media screen and (max-width: 600px) {
     #header {
