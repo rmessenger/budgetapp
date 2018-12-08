@@ -20,42 +20,60 @@
                 <b>{{monthWords[month.month-1]}}, {{month.year}}</b>
             </option>
         </select>
-    </div>
 
-    <div id="content" v-if="selectedMonth">
         <!-- Planned income -->
-        <table>
+        <table style="margin-top: 33px" v-if="selectedMonth">
             <tr class="bb">
-                <td><b>Planned Income</b></td>
+                <td><b>Income</b></td>
                 <td class="tar">
                     <input type="text" class="tar" v-model="selectedMonth.planned_income" size="4" @blur="updateSelectedMonth" @focus=""/>
                 </td>
             </tr>
+            <tr class="bb">
+                <td>
+                    <b v-if="selectedMonth.planned_income >= totalPlannedExpenses">Planned Surplus</b>
+                    <b v-else>Planned Deficit</b>
+                </td>
+                <td class="tar diff" :class="{ 'neg': totalPlannedExpenses > selectedMonth.planned_income }">
+                    {{selectedMonth.planned_income - totalPlannedExpenses}}
+                </td>
+            </tr>
+            <tr class="bb">
+                <td>
+                    <b v-if="selectedMonth.planned_income >= totalCurrentExpenses">Current Surplus</b>
+                    <b v-else>Current Deficit</b>
+                </td>
+                <td class="tar diff" :class="{ 'neg': totalCurrentExpenses > selectedMonth.planned_income }">
+                    {{selectedMonth.planned_income - totalCurrentExpenses}}
+                </td>
+            </tr>
         </table>
+    </div>
 
+    <div id="content" v-if="selectedMonth">
         <!-- List of categories -->
         <table>
             <tr class="bb">
                 <td></td>
                 <td class="tar"><b>Planned</b></td>
-                <td class="tar"><b>Actual</b></td>
+                <td class="tar"><b>Current</b></td>
                 <td class="tar"><b>Difference</b></td>
             </tr>
             <tr class="bb">
                 <td><b>Total Expenses</b></td>
                 <td class="tar">{{totalPlannedExpenses}}</td>
-                <td class="tar">{{totalActualExpenses}}</td>
-                <td class="tar diff" :class="{ 'neg' : totalActualExpenses > totalPlannedExpenses }">
-                    {{totalPlannedExpenses - totalActualExpenses}}
+                <td class="tar">{{totalCurrentExpenses}}</td>
+                <td class="tar diff" :class="{ 'neg' : totalCurrentExpenses > totalPlannedExpenses }">
+                    {{totalPlannedExpenses - totalCurrentExpenses}}
                 </td>
             </tr>
             <tr v-for="category in categories" :class="{ 'error': category.error }">
                 <td v-if="!category.unsaved">{{category.name}}</td>
                 <td v-else><input type="text" v-model="category.name" @blur="handleCategoryChange(category)"/></td>
                 <td class="tar"><input type="text" size="4" v-model="category.planned_expenses" @blur="handleCategoryChange(category)" class="tar"/></td>
-                <td class="tar">{{categoryActualExpenses[category.name]}}</td>
-                <td class="tar diff" :class="{ 'neg': categoryActualExpenses[category.name] > category.planned_expenses }">
-                    {{category.planned_expenses - categoryActualExpenses[category.name]}}
+                <td class="tar">{{categoryCurrentExpenses[category.name]}}</td>
+                <td class="tar diff" :class="{ 'neg': categoryCurrentExpenses[category.name] > category.planned_expenses }">
+                    {{category.planned_expenses - categoryCurrentExpenses[category.name]}}
                 </td>
             </tr>
             <tr class="sa">
@@ -79,7 +97,7 @@
                 <td><input type="text" v-model="item.name" @blur="handleItemChange(item)"/></td>
                 <td>
                     <select v-model="item.category_name" @change="handleItemChange(item)">
-                        <option value="">Select Category</option>
+                        <option value="" v-if="item.category_name==''">Select Category</option>
                         <option v-for="category in savedCategories" :value="category.name">
                             {{category.name}}
                         </option>
@@ -142,12 +160,12 @@
                     return parseInt(category.planned_expenses) ? tpe+parseInt(category.planned_expenses) : tpe;
                 }, 0);
             },
-            totalActualExpenses() {
+            totalCurrentExpenses() {
                 return this.items.reduce((tae, item) => {
                     return parseInt(item.cost) ? tae+parseInt(item.cost) : tae;
                 }, 0);
             },
-            categoryActualExpenses() {
+            categoryCurrentExpenses() {
                 return this.categories.reduce((cae, category) => ({
                     ...cae,
                     [category.name]: this.items.filter(item => item.category_name==category.name).reduce((ae, item) => {
