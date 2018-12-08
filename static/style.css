@@ -111,6 +111,7 @@ button:hover {
     }
     #app {
         width: 100%;
+        box-shadow: none;
     }
 }
 @media screen and (max-width: 425px) {
