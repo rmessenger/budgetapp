@@ -192,6 +192,19 @@
             savedCategories() {
                 return this.categories.filter(category => !category.unsaved);
             },
+            sortedCategories() {
+                return this.categories.sort((a,b) => {
+                    const ape = parseInt(a.planned_expenses);
+                    const bpe = parseInt(b.planned_expenses);
+                    const aae = this.categoryCurrentExpenses[a.name];
+                    const bae = this.categoryCurrentExpenses[b.name];
+                    if (aae && bae) {
+                        return bae - aae;
+                    } else {
+                        return bpe - ape;
+                    }
+                });
+            },
         },
         watch: {
             selectedMonth(val) {
@@ -209,6 +222,9 @@
                     this.categories = [];
                     this.addNextMonth();
                 }
+            },
+            items(val) {
+                this.categories = this.sortedCategories;
             },
         },
         methods: {
@@ -267,9 +283,16 @@
             },
             handleItemChange(item) {
                 if (item && parseInt(item.cost) >= 0 && item.name.length > 0 && item.category_name.length > 0 && item.day > 0 && item.day <= 31) {
-                    (item.id ? this.updateItem(item) : this.newItem(item))
-                        .then(() => item.error = null)
-                        .catch(error => item.error = error.message);
+                    if (item.id) {
+                        this.updateItem(item)
+                            .then(() => item.error = null)
+                            .catch(error => item.error = error.message);
+                    } else {
+                        this.newItem(item).then(results => {
+                            item.id = results.data;
+                            item.error = null;
+                        }).catch(error => item.error = error.message);
+                    }
                 }
                 if (item && item.day > 0 && item.day <= 31) {
                     this.items = this.items.sort((a,b) => a.day - b.day);
@@ -283,6 +306,7 @@
                             category.error = null;
                         }).catch(error => category.error = error.message);
                 }
+                this.categories = this.sortedCategories;
             },
             removeItem(item) {
                 if (item.id) {

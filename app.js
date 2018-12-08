@@ -198,8 +198,8 @@ app.post('/item/:month/:year/:category/:cost/:day/:name', (request, response) =>
         response.status(500);
         response.send(error);
       } else {
-        response.send("Success.");
-        console.log(`Added item: ${month}, ${year}, ${category}, ${cost}, ${day}, ${name}`);
+        response.json(results.insertId);
+        console.log(`Added item ${results.insertId}: ${month}, ${year}, ${category}, ${cost}, ${day}, ${name}`);
       }
     });
   } else {
