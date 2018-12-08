@@ -1,21 +1,23 @@
 <html>
   <head>
-    <title>BudgetApp</title>
+    <title>Budget App</title>
     <script src="https://vuejs.org/js/vue.js"></script>
     <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="style.css"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
   </head>
   <body>
     <div id="app">
-      <h1>BudgetApp</h1>
-      
-      <!-- Select a month -->
-      <select v-model="selectedMonth">
-        <option :value="null">Add Next Month</option>
-        <option v-for="month in months" :value="month">
-          <b>{{monthWords[month.month-1]}}, {{month.year}}:</b>
-          ${{month.planned_income}}
-        </option>
-      </select>
+      <div id="header">
+        <h1><i>BudgetApp</i></h1>
+        <!-- Select a month -->
+        <select v-model="selectedMonth" class="month">
+          <option :value="null">Add Next Month</option>
+          <option v-for="month in months" :value="month">
+            <b>{{monthWords[month.month-1]}}, {{month.year}}</b>
+          </option>
+        </select>
+      </div>
 
       <!-- List of categories -->
       <ul>
@@ -33,7 +35,6 @@
     </div>
   </body>
   <script>
-
     var vm = new Vue({
       el: '#app',
       data: () => ({

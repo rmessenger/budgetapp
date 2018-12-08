@@ -209,7 +209,7 @@ app.post('/item/:month/:year/:category/:cost/:day/:name', (request, response) =>
 });
 
 app.get('/months', (request, response) => {
-  db.query('select * from MONTH_SUMMARY', (error, results) => {
+  db.query('select * from MONTH', (error, results) => {
     if (error) {
       response.status(500);
       response.send(error);
