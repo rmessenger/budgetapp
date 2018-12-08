@@ -99,13 +99,13 @@ button {
     font-weight: bolder;
     border: none;
     font-family: Courier;
-    box-shadow: 1px 1px 0 rgba(0,0,0,0.5);
+    box-shadow: inset 3px 3px 3px rgba(255,255,255,0.2), inset -3px -3px 3px rgba(0,0,0,0.2);
 }
 button.remove {
-    background: rgba(255, 81, 0, 0.26);
+    background: rgba(255, 81, 0, 0.45);
 }
 button.add {
-    background: rgba(0, 128, 89, 0.26);
+    background: rgba(0, 128, 89, 0.45);
 }
 button:hover {
     background: black;
@@ -114,7 +114,7 @@ button:hover {
 .btntd {
     width: 30px;
 }
-@media screen and (max-width: 600px) {
+@media screen and (max-width: 600px), print {
     #header {
         width: calc(100% - 40px);
         border-left: none;
@@ -141,5 +141,21 @@ button:hover {
     }
     #app {
         padding-top: 124px;
+    }
+}
+@media print {
+    button {
+        display: none;
+    }
+    input {
+        border: none;
+        box-shadow: none;
+    }
+    .diff, .diff.neg {
+        color: black;
+        font-weight: normal;
+    }
+    .btntd {
+        display: none;
     }
 }

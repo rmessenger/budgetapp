@@ -54,15 +54,16 @@
         <!-- List of categories -->
         <table>
             <tr class="bb">
-                <td colspan="2">
+                <td class="btntd">
                     <button class="add" @click="createNewCategory">+</button>
                 </td>
+                <td></td>
                 <td class="tar"><b>Planned</b></td>
                 <td class="tar"><b>Current</b></td>
                 <td class="tar"><b>Difference</b></td>
             </tr>
             <tr class="bb">
-                <td></td>
+                <td class="btntd"></td>
                 <td><b>Total Expenses</b></td>
                 <td class="tar">{{totalPlannedExpenses}}</td>
                 <td class="tar">{{totalCurrentExpenses}}</td>
@@ -85,7 +86,7 @@
         <!-- List of items -->
         <table>
             <tr class="bb">
-                <td>
+                <td class="btntd">
                     <button class="add" v-if="savedCategories.length > 0" @click="createNewItem">+</button>
                 </td>
                 <td><b>Date</b></td>
