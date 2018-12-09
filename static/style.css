@@ -114,6 +114,14 @@ button:hover {
 .btntd {
     width: 30px;
 }
+td.name {
+    width: 50%;
+}
+td {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
 @media screen and (max-width: 600px), print {
     #header {
         width: calc(100% - 40px);

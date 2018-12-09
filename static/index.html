@@ -73,8 +73,8 @@
             </tr>
             <tr v-for="category in categories" :class="{ 'error': category.error }">
                 <td class="btntd"><button class="remove" v-if="!categoryItemCount[category.name] || category.unsaved" @click="removeCategory(category)">-</button></td>
-                <td v-if="!category.unsaved">{{category.name}}</td>
-                <td v-else><input type="text" v-model="category.name" @blur="handleCategoryChange(category)"/></td>
+                <td v-if="!category.unsaved" class="name">{{category.name}}</td>
+                <td v-else class="name"><input type="text" v-model="category.name" @blur="handleCategoryChange(category)"/></td>
                 <td class="tar"><input type="text" size="4" v-model="category.planned_expenses" @blur="handleCategoryChange(category)" class="tar"/></td>
                 <td class="tar">{{categoryCurrentExpenses[category.name]}}</td>
                 <td class="tar diff" :class="{ 'neg': categoryCurrentExpenses[category.name] > category.planned_expenses }">
@@ -89,16 +89,17 @@
                 <td class="btntd">
                     <button class="add" v-if="savedCategories.length > 0" @click="createNewItem">+</button>
                 </td>
-                <td><b>Date</b></td>
                 <td><b>Item</b></td>
-                <td><b>Category</b></td>
+                <td class="tar"><b>Date</b></td>
                 <td class="tar"><b>Cost</b></td>
+                <td class="tar"><b>Category</b></td>
             </tr>
             <tr v-for="item in items" :class="{ 'error': item.error }">
                 <td class="btntd"><button class="remove" @click="removeItem(item)">-</button></td>
-                <td>{{selectedMonth.month}}/<input type="text" v-model="item.day" size="2" @blur="handleItemChange(item)"/></td>
-                <td><input type="text" v-model="item.name" @blur="handleItemChange(item)"/></td>
-                <td>
+                <td class="name"><input type="text" v-model="item.name" @blur="handleItemChange(item)"/></td>
+                <td class="tar">{{selectedMonth.month}}/<input type="text" v-model="item.day" size="2" @blur="handleItemChange(item)"/></td>
+                <td class="tar"><input type="text" v-model="item.cost" size="4" class="tar" @blur="handleItemChange(item)"/></td>
+                <td class="tar">
                     <select v-model="item.category_name" @change="handleItemChange(item)">
                         <option value="" v-if="item.category_name==''">Select Category</option>
                         <option v-for="category in savedCategories" :value="category.name">
@@ -106,7 +107,6 @@
                         </option>
                     </select>
                 </td>
-                <td class="tar"><input type="text" v-model="item.cost" size="4" class="tar" @blur="handleItemChange(item)"/></td>
             </tr>
         </table>
     </div>
