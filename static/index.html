@@ -3,103 +3,162 @@
     <title>Budget App</title>
     <script src="https://vuejs.org/js/vue.js"></script>
     <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
-    <link rel="stylesheet" type="text/css" href="style.css"/>
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://unpkg.com/tachyons@4.10.0/css/tachyons.min.css"/>
+    <link href="https://fonts.googleapis.com/css?family=Arapey|Pacifico|Permanent+Marker" rel="stylesheet">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        .arapey { font-family: 'Arapey', serif; }
+        .pacifico { font-family: 'Pacifico', cursive; }
+        .permanent-marker { font-family: 'Permanent Marker', cursive; }
+        @media print {
+            .hide-print { display: none; }
+            * { background: white !important; color: black !important; }
+        }
+        input, select, button {
+            border: none;
+            outline: none;
+            margin: 0;
+            padding: 0;
+            background: none;
+            font-weight: bold;
+        }
+        input:hover, select:hover {
+            background: rgba(0,0,0,0.05);
+        }
+        input:focus, select:focus {
+            background: rgba(0,0,0,0.1);
+        }
+    </style>
 </head>
 <body>
-<div id="app">
+    <div id="app" class="arapey w-100 mw7 center pt3 pt4-ns">
+        <header class="w-100 fixed top-0 left-0 right-0 flex bg-white pa2 mw7 center bb">
+                <span class="nowrap f4 f2-ns permanent-marker flex-grow-1">
+                    <i class="fas fa-money-check-alt mr2"></i>BudgetApp
+                </span>
 
-    <!-- HEADER -->
-    <div id="header">
-        <h1><i>BudgetApp</i></h1>
+                <!-- Select a month -->
+                <select v-model="selectedMonth" class="bg-white bw0 f5 f4-ns tr truncate">
+                    <option :value="null">Add Next Month</option>
+                    <option v-for="month in months" :value="month">
+                        <b>{{monthWords[month.month-1]}}, {{month.year}}</b>
+                    </option>
+                </select>
+        </header>
 
-        <!-- Select a month -->
-        <select v-model="selectedMonth" class="month">
-            <option :value="null">Add Next Month</option>
-            <option v-for="month in months" :value="month">
-                <b>{{monthWords[month.month-1]}}, {{month.year}}</b>
-            </option>
-        </select>
-
-        <!-- Planned income -->
-        <table style="margin-top: 33px" v-if="selectedMonth">
-            <tr class="bb">
-                <td><b>Income</b></td>
-                <td class="tar">
-                    <input type="text" class="tar" v-model="selectedMonth.planned_income" size="4" @blur="updateSelectedMonth"/>
-                </td>
-            </tr>
-            <tr class="bb">
-                <td>
-                    <b v-if="selectedMonth.planned_income >= totalPlannedExpenses">Planned Surplus</b>
-                    <b v-else>Planned Deficit</b>
-                </td>
-                <td class="tar diff" :class="{ 'neg': totalPlannedExpenses > selectedMonth.planned_income }">
+        <!-- overview -->
+        <div class="f6 bt bb dark-gray bg-light-gray f5-ns flex items-center justify-between tr pa2 pt3 mt3" v-if="selectedMonth">
+            <div class="tl nowrap">
+                <div class="fl w-50-ns">Income&nbsp;</div>
+                <div class="fl w-50-ns">
+                    <input ref="income" class="pa0 tl w3" type="number" v-model="selectedMonth.planned_income" @blur="updateSelectedMonth"/>
+                </div>
+            </div>
+            <i class="fas fa-minus ph2"></i>
+            <div class="tl mh2">
+                <div class="nowrap">
+                    Planned Expenses:
+                </div>
+                <div class="nowrap">
+                    Current Expenses:
+                </div>
+            </div>
+            <div class="tr">
+                <div>{{totalPlannedExpenses}}</div>
+                <div>{{totalCurrentExpenses}}</div>
+            </div>
+            <i class="fas fa-equals ph3"></i>
+            <div>
+                <div :class="{ 'dark-red': totalPlannedExpenses > selectedMonth.planned_income }">
                     {{selectedMonth.planned_income - totalPlannedExpenses}}
-                </td>
-            </tr>
-            <tr class="bb">
-                <td>
-                    <b v-if="selectedMonth.planned_income >= totalCurrentExpenses">Current Surplus</b>
-                    <b v-else>Current Deficit</b>
-                </td>
-                <td class="tar diff" :class="{ 'neg': totalCurrentExpenses > selectedMonth.planned_income }">
+                </div>
+                <div :class="{ 'dark-red': totalPlannedExpenses > selectedMonth.planned_income }">
                     {{selectedMonth.planned_income - totalCurrentExpenses}}
-                </td>
-            </tr>
-        </table>
-    </div>
+                </div>
+            </div>
+        </div>
 
-    <div id="content" v-if="selectedMonth">
         <!-- List of categories -->
-        <table>
-            <tr class="bb">
-                <td class="btntd">
-                    <button class="add" @click="createNewCategory">+</button>
-                </td>
+        <div class="f4 pa2 pb2 pt2 bb tr white bg-dark-gray">
+            <button class="pointer fl hide-print bg-green dim white br4 ph3 pv1 f6"
+                    @click="createNewCategory">
+                <i class="fas fa-plus mr1"></i>
+                Add
+            </button>
+            Categories
+            <i class="fas fa-object-group w2 tr"></i>
+        </div>
+        <table class="dt--fixed pa2 mt1" v-if="selectedMonth">
+            <tr>
                 <td></td>
-                <td class="tar"><b>Planned</b></td>
-                <td class="tar"><b>Current</b></td>
-                <td class="tar"><b>Difference</b></td>
+                <td class="w-20 tr truncate">Planned</td>
+                <td class="w-20 tr truncate">Current</td>
+                <td class="w-20 tr truncate">Difference</td>
+                <td class="w2 hide-print"></td>
             </tr>
-            <tr class="bb">
-                <td class="btntd"></td>
-                <td><b>Total Expenses</b></td>
-                <td class="tar">{{totalPlannedExpenses}}</td>
-                <td class="tar">{{totalCurrentExpenses}}</td>
-                <td class="tar diff" :class="{ 'neg' : totalCurrentExpenses > totalPlannedExpenses }">
+            <tr>
+                <td class="truncate">Total Expenses</td>
+                <td class="w-20 tr truncate">{{totalPlannedExpenses}}</td>
+                <td class="w-20 tr truncate">{{totalCurrentExpenses}}</td>
+                <td class="w-20 tr truncate"
+                     :class="{ 'dark-red' : totalCurrentExpenses > totalPlannedExpenses }">
                     {{totalPlannedExpenses - totalCurrentExpenses}}
                 </td>
+                <td class="w2 hide-print"></td>
             </tr>
-            <tr v-for="category in categories" :class="{ 'error': category.error }">
-                <td class="btntd"><button class="remove" v-if="!categoryItemCount[category.name] || category.unsaved" @click="removeCategory(category)">-</button></td>
-                <td v-if="!category.unsaved" class="name">{{category.name}}</td>
-                <td v-else class="name"><input type="text" v-model="category.name" @blur="handleCategoryChange(category)"/></td>
-                <td class="tar"><input type="text" size="4" v-model="category.planned_expenses" @blur="handleCategoryChange(category)" class="tar"/></td>
-                <td class="tar">{{categoryCurrentExpenses[category.name]}}</td>
-                <td class="tar diff" :class="{ 'neg': categoryCurrentExpenses[category.name] > category.planned_expenses }">
+            <tr v-for="(category, index) in categories"
+                 :class="{ 'bg-yellow': category.error }">
+                <td class="truncate" v-if="!category.unsaved">{{category.name}}</td>
+                <td v-else>
+                    <input :ref="`category-${index}`" class="w-100 truncate" type="text" v-model="category.name" @blur="handleCategoryChange(category)"/>
+                </td>
+                <td class="w-20">
+                    <input type="number"
+                           dir="rtl"
+                           v-model="category.planned_expenses"
+                           @blur="handleCategoryChange(category)"
+                           class="w-100 tr truncate"/>
+                </td>
+                <td class="w-20 tr truncate">{{categoryCurrentExpenses[category.name]}}</td>
+                <td class="w-20 tr truncate"
+                     :class="{ 'dark-red': categoryCurrentExpenses[category.name] > category.planned_expenses }">
                     {{category.planned_expenses - categoryCurrentExpenses[category.name]}}
+                </td>
+                <td class="w2 tr hide-print">
+                    <button class="dark-red pointer dim"
+                            v-if="!categoryItemCount[category.name] || category.unsaved"
+                            @click="removeCategory(category)">
+                        <i class="fas fa-minus-circle"></i>
+                    </button>
                 </td>
             </tr>
         </table>
 
         <!-- List of items -->
-        <table>
-            <tr class="bb">
-                <td class="btntd">
-                    <button class="add" v-if="savedCategories.length > 0" @click="createNewItem">+</button>
-                </td>
-                <td><b>Item</b></td>
-                <td class="tar"><b>Date</b></td>
-                <td class="tar"><b>Cost</b></td>
-                <td class="tar"><b>Category</b></td>
+        <div class="f4 pa2 pb2 pt2 mt2 bt bb tr white bg-dark-gray">
+            <button class="pointer fl hide-print bg-green dim white br4 ph3 pv1 f6"
+                    v-if="savedCategories.length > 0"
+                    @click="createNewItem">
+                <i class="fas fa-plus mr1"></i>
+                Add
+            </button>
+            Items
+            <i class="fas fa-hamburger w2 tr"></i>
+        </div>
+        <table class="pa2 dt--fixed mt1">
+            <tr>
+                <td></td>
+                <td class="w-20 truncate tr">Category</td>
+                <td class="w-20 truncate tr">Cost</td>
+                <td class="w-20 truncate tr">Date</td>
+                <td class="w2 hide-print"></td>
             </tr>
-            <tr v-for="item in items" :class="{ 'error': item.error }">
-                <td class="btntd"><button class="remove" @click="removeItem(item)">-</button></td>
-                <td class="name"><input type="text" v-model="item.name" @blur="handleItemChange(item)"/></td>
-                <td class="tar">{{selectedMonth.month}}/<input type="text" v-model="item.day" size="2" @blur="handleItemChange(item)"/></td>
-                <td class="tar"><input type="text" v-model="item.cost" size="4" class="tar" @blur="handleItemChange(item)"/></td>
-                <td class="tar">
+            <tr v-for="(item, index) in items" :class="{ 'bg-yellow': item.error }">
+                <td>
+                    <input :ref="`item-${index}`" class="w-100 truncate" type="text" v-model="item.name" @blur="handleItemChange(item)"/>
+                </td>
+                <td class="w-20 tr truncate">
                     <select v-model="item.category_name" @change="handleItemChange(item)">
                         <option value="" v-if="item.category_name==''">Select Category</option>
                         <option v-for="category in savedCategories" :value="category.name">
@@ -107,10 +166,21 @@
                         </option>
                     </select>
                 </td>
+                <td class="w-20">
+                    <input class="w-100 truncate tr" dir="rtl" type="number" v-model="item.cost" @blur="handleItemChange(item)"/>
+                </td>
+                <td class="w-20">
+                    <input class="w-100 truncate tr" dir="rtl" type="number" v-model="item.day" @blur="handleItemChange(item)"/>
+                </td>
+                <td class="w2 tr hide-print">
+                    <button class="dark-red pointer dim"
+                            @click="removeItem(item)">
+                        <i class="fas fa-minus-circle"></i>
+                    </button>
+                </td>
             </tr>
         </table>
     </div>
-</div>
 </body>
 <script>
     var vm = new Vue({
@@ -261,6 +331,7 @@
                         cost: '',
                         category_name: '',
                     });
+                    this.$nextTick(() => this.$refs[`item-0`][0].focus());
                 }
             },
             createNewCategory() {
@@ -271,6 +342,7 @@
                     planned_expenses: '',
                     unsaved: true,
                 });
+                this.$nextTick(() => this.$refs[`category-0`][0].focus());
             },
             handleItemChange(item) {
                 if (item && parseInt(item.cost) >= 0 && item.name.length > 0 && item.category_name.length > 0 && item.day > 0 && item.day <= 31) {
@@ -301,9 +373,11 @@
             },
             removeItem(item) {
                 if (item.id) {
-                    this.deleteItem(item).then(() => {
-                        this.items = this.items.filter(i => i.id != item.id);
-                    });
+                    if (window.confirm("Are you sure you want to delete " + item.name + "?")) {
+                        this.deleteItem(item).then(() => {
+                            this.items = this.items.filter(i => i.id != item.id);
+                        });
+                    }
                 } else {
                     this.items = this.items.filter(i => i !== item);
                 }
@@ -312,9 +386,11 @@
                 if (category.unsaved) {
                     this.categories = this.categories.filter(c => c !== category);
                 } else if (!this.categoryItemCount[category.name]) {
-                    this.deleteCategory(category).then(() => {
-                        this.categories = this.categories.filter(c => c.name != category.name);
-                    });
+                    if (window.confirm("Are you sure you want to delete " + category.name + "?")) {
+                        this.deleteCategory(category).then(() => {
+                            this.categories = this.categories.filter(c => c.name != category.name);
+                        });
+                    }
                 }
             },
 
